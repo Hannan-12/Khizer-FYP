@@ -1,0 +1,128 @@
+.results-panel {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.results-panel h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.results-loading {
+  text-align: center;
+  padding: 20px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0e0e0;
+  border-top: 3px solid #1a7a5c;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.results-loading p {
+  color: #666;
+  font-size: 14px;
+}
+
+.results-error {
+  text-align: center;
+  color: #c33;
+}
+
+.results-error h3 {
+  color: #c33;
+}
+
+.results-warning {
+  background: #fff3cd;
+  color: #856404;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.prediction-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.prediction-label {
+  display: inline-block;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.prediction-label.healthy {
+  background: #d4edda;
+  color: #155724;
+}
+
+.prediction-label.normal {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.prediction-label.stressed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.confidence {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.probability-bars {
+  text-align: left;
+}
+
+.prob-bar {
+  margin-bottom: 10px;
+}
+
+.prob-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.prob-track {
+  height: 8px;
+  background: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.prob-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.chart-section {
+  margin-top: 20px;
+}
+
+.chart-section h4 {
+  font-size: 14px;
+  color: #333;
+  margin: 0 0 12px 0;
+}
