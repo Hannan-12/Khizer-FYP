@@ -42,3 +42,4 @@ npm-debug.log*
 # Firebase
 firebase-debug.log
 .firebase/
+backend/firebase-service-account-key.json
