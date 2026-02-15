@@ -3,11 +3,6 @@ import torch.nn as nn
 
 
 class CropHealthLSTM(nn.Module):
-    """LSTM model for crop health classification from Sentinel-1 time series.
-
-    Input: (batch_size, seq_length, input_size)
-    Output: (batch_size, num_classes) — logits for [Healthy, Normal, Stressed]
-    """
 
     def __init__(self, input_size=5, hidden_size=64, num_layers=2, num_classes=3, dropout=0.3):
         super(CropHealthLSTM, self).__init__()
@@ -31,11 +26,9 @@ class CropHealthLSTM(nn.Module):
         )
 
     def forward(self, x):
-        # x shape: (batch, seq_len, input_size)
         lstm_out, (h_n, _) = self.lstm(x)
 
-        # Use the last hidden state from the final LSTM layer
-        last_hidden = h_n[-1]  # shape: (batch, hidden_size)
+        last_hidden = h_n[-1]
 
         out = self.classifier(last_hidden)
         return out
