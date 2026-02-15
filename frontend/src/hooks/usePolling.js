@@ -25,7 +25,7 @@ export default function usePolling(jobId, interval = 3000) {
       }
     };
 
-    poll(); // immediate first call
+    poll();
     timerRef.current = setInterval(poll, interval);
 
     return () => {

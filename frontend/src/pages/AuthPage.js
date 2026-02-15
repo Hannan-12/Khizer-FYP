@@ -26,7 +26,6 @@ export default function AuthPage() {
         await register(email, password);
       }
     } catch {
-      // error is handled by useAuth hook
     }
   };
 

@@ -15,10 +15,8 @@ async def create_analysis(
     request: AnalysisRequest,
     user_id: str = Depends(verify_firebase_token),
 ):
-    """Create a new crop health analysis job."""
     job_id = str(uuid.uuid4())
 
-    # Store job in Firestore
     db = get_firestore_client()
     job_ref = db.collection("analysis_jobs").document(job_id)
     job_ref.set({
@@ -32,7 +30,6 @@ async def create_analysis(
         "season": request.season,
     })
 
-    # Launch analysis pipeline in background
     asyncio.create_task(run_analysis_pipeline(job_id, request))
 
     return AnalysisResponse(
@@ -47,7 +44,6 @@ async def get_result(
     job_id: str,
     user_id: str = Depends(verify_firebase_token),
 ):
-    """Get the result of an analysis job."""
     db = get_firestore_client()
     job_ref = db.collection("analysis_jobs").document(job_id)
     doc = job_ref.get()
@@ -57,7 +53,6 @@ async def get_result(
 
     data = doc.to_dict()
 
-    # Verify ownership
     if data.get("user_id") != user_id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -76,7 +71,6 @@ async def get_result(
 async def list_jobs(
     user_id: str = Depends(verify_firebase_token),
 ):
-    """List all analysis jobs for the current user."""
     db = get_firestore_client()
     jobs = (
         db.collection("analysis_jobs")

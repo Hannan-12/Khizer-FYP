@@ -15,7 +15,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS
 origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +24,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize services on startup
 @app.on_event("startup")
 async def startup():
     initialize_firebase()
