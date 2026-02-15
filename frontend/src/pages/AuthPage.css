@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, black, 100%);
+  background: linear-gradient(135deg, #0f4c3a 0%, #1a7a5c 50%, #2d9b6e 100%);
 }
 
 .auth-container {
