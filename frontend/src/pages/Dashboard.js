@@ -19,10 +19,9 @@ export default function Dashboard({ user, onLogout }) {
   const { result, polling } = usePolling(jobId);
 
   const handlePolygonComplete = useCallback((polygon) => {
-    // Convert Google Maps polygon to GeoJSON
     const path = polygon.getPath().getArray();
     const coordinates = path.map((p) => [p.lng(), p.lat()]);
-    coordinates.push(coordinates[0]); // close the ring
+    coordinates.push(coordinates[0]);
 
     const geojson = {
       type: "Polygon",

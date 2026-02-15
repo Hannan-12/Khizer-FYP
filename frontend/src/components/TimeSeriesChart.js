@@ -13,7 +13,6 @@ import {
 export default function TimeSeriesChart({ data }) {
   if (!data || data.length === 0) return null;
 
-  // Format data for Recharts
   const chartData = data.map((point) => ({
     date: point.date,
     RVI: point.rvi_mean != null ? Number(point.rvi_mean.toFixed(3)) : null,

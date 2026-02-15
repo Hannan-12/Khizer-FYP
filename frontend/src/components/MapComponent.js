@@ -16,7 +16,7 @@ const mapContainerStyle = {
 };
 
 const defaultCenter = {
-  lat: 30.3753, // Pakistan center
+  lat: 30.3753,
   lng: 69.3451,
 };
 
@@ -32,7 +32,7 @@ const mapOptions = {
 const drawingOptions = {
   drawingControl: true,
   drawingControlOptions: {
-    position: 2, // TOP_CENTER
+    position: 2,
     drawingModes: ["polygon"],
   },
   polygonOptions: {
@@ -62,16 +62,13 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
 
   const handlePolygonComplete = useCallback(
     (polygon) => {
-      // Remove previous polygon
       if (polygonRef.current) {
         polygonRef.current.setMap(null);
       }
       polygonRef.current = polygon;
 
-      // Notify parent
       onPolygonComplete(polygon);
 
-      // Listen for edits
       const path = polygon.getPath();
       window.google.maps.event.addListener(path, "set_at", () => {
         onPolygonComplete(polygon);
@@ -132,7 +129,6 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
           onPolygonComplete={handlePolygonComplete}
         />
 
-        {/* RVI Tile Overlay */}
         {rviMapUrl && rviLayerVisible && (
           <RviOverlay url={rviMapUrl} map={mapRef.current} />
         )}

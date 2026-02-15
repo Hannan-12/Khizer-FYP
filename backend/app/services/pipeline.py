@@ -8,15 +8,12 @@ from app.schemas.analysis import AnalysisRequest
 
 
 async def run_analysis_pipeline(job_id: str, request: AnalysisRequest):
-    """Run the full analysis pipeline: GEE fetch → feature engineering → LSTM prediction."""
     db = get_firestore_client()
     job_ref = db.collection("analysis_jobs").document(job_id)
 
     try:
-        # Update status to processing
         job_ref.update({"status": "processing"})
 
-        # Step 1: Fetch Sentinel-1 time series from GEE
         df = fetch_sentinel1_timeseries(
             aoi_geojson=request.aoi_geojson,
             start_date=request.start_date,
@@ -32,7 +29,6 @@ async def run_analysis_pipeline(job_id: str, request: AnalysisRequest):
             })
             return
 
-        # Step 2: Prepare time series for LSTM
         time_series_records = []
         for _, row in df.iterrows():
             time_series_records.append({
@@ -45,12 +41,10 @@ async def run_analysis_pipeline(job_id: str, request: AnalysisRequest):
                 "vv_vh_ratio": _safe_float(row.get("vv_vh_ratio")),
             })
 
-        # Step 3: Run LSTM prediction
         feature_cols = ["rvi_mean", "vv_mean", "vh_mean", "vv_vh_ratio", "rvi_std"]
         features = df[feature_cols].values
         prediction = predict_crop_health(features)
 
-        # Step 4: Get RVI map tile URL
         rvi_map_url = None
         try:
             rvi_map_url = get_rvi_map_tile_url(
@@ -61,7 +55,6 @@ async def run_analysis_pipeline(job_id: str, request: AnalysisRequest):
         except Exception as e:
             print(f"[Pipeline] RVI map generation failed: {e}")
 
-        # Step 5: Store results
         job_ref.update({
             "status": "completed",
             "prediction": prediction,
@@ -78,7 +71,6 @@ async def run_analysis_pipeline(job_id: str, request: AnalysisRequest):
 
 
 def _safe_float(value) -> float | None:
-    """Convert value to float, returning None for NaN/None."""
     if value is None:
         return None
     try:

@@ -9,10 +9,9 @@ class Coordinate(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
-    """Request body for creating a new analysis job."""
-    aoi_geojson: dict  # GeoJSON polygon
-    start_date: str  # YYYY-MM-DD
-    end_date: str  # YYYY-MM-DD
+    aoi_geojson: dict
+    start_date: str
+    end_date: str
     crop_type: Optional[str] = None
     season: Optional[str] = None
 
@@ -34,7 +33,6 @@ class AnalysisRequest(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
-    """Response after creating an analysis job."""
     job_id: str
     status: str
     message: str
@@ -55,13 +53,12 @@ class PredictionResult(BaseModel):
     normal: float
     stressed: float
     confidence: float
-    label: str  # "Healthy", "Normal", or "Stressed"
+    label: str
 
 
 class AnalysisResult(BaseModel):
-    """Full analysis result returned to frontend."""
     job_id: str
-    status: str  # "pending", "processing", "completed", "failed"
+    status: str
     prediction: Optional[PredictionResult] = None
     time_series: Optional[list[TimeSeriesPoint]] = None
     rvi_map_url: Optional[str] = None
