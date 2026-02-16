@@ -18,15 +18,7 @@ export default function Dashboard({ user, onLogout }) {
 
   const { result, polling } = usePolling(jobId);
 
-  const handlePolygonComplete = useCallback((polygon) => {
-    const path = polygon.getPath().getArray();
-    const coordinates = path.map((p) => [p.lng(), p.lat()]);
-    coordinates.push(coordinates[0]);
-
-    const geojson = {
-      type: "Polygon",
-      coordinates: [coordinates],
-    };
+  const handlePolygonComplete = useCallback((geojson) => {
     setAoiGeojson(geojson);
   }, []);
 

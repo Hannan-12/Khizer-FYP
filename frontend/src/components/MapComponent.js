@@ -1,109 +1,86 @@
 import React, { useState, useCallback, useRef } from "react";
-import {
-  GoogleMap,
-  useJsApiLoader,
-  DrawingManager,
-  Polygon,
-} from "@react-google-maps/api";
+import { MapContainer, TileLayer, FeatureGroup } from "react-leaflet";
+import { EditControl } from "react-leaflet-draw";
+import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 import "./MapComponent.css";
 
-const MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-const libraries = ["drawing", "places"];
-
-const mapContainerStyle = {
-  width: "100%",
-  height: "100%",
-};
-
-const defaultCenter = {
-  lat: 30.3753,
-  lng: 69.3451,
-};
-
+const defaultCenter = [30.3753, 69.3451];
 const defaultZoom = 6;
 
-const mapOptions = {
-  mapTypeId: "hybrid",
-  mapTypeControl: true,
-  streetViewControl: false,
-  fullscreenControl: true,
-};
-
-const drawingOptions = {
-  drawingControl: true,
-  drawingControlOptions: {
-    position: 2,
-    drawingModes: ["polygon"],
-  },
-  polygonOptions: {
-    fillColor: "#1a7a5c",
-    fillOpacity: 0.2,
-    strokeColor: "#1a7a5c",
-    strokeWeight: 2,
-    editable: true,
-    draggable: false,
-  },
-};
-
 export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson }) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: MAPS_API_KEY,
-    libraries,
-  });
-
   const [searchQuery, setSearchQuery] = useState("");
   const mapRef = useRef(null);
-  const polygonRef = useRef(null);
+  const featureGroupRef = useRef(null);
   const [rviLayerVisible, setRviLayerVisible] = useState(true);
 
-  const onMapLoad = useCallback((map) => {
-    mapRef.current = map;
-  }, []);
-
-  const handlePolygonComplete = useCallback(
-    (polygon) => {
-      if (polygonRef.current) {
-        polygonRef.current.setMap(null);
+  const handleCreated = useCallback(
+    (e) => {
+      // Remove previous polygon if any
+      const fg = featureGroupRef.current;
+      if (fg) {
+        const layers = fg.getLayers();
+        if (layers.length > 1) {
+          fg.removeLayer(layers[0]);
+        }
       }
-      polygonRef.current = polygon;
 
-      onPolygonComplete(polygon);
+      const layer = e.layer;
+      const latlngs = layer.getLatLngs()[0];
+      const coordinates = latlngs.map((ll) => [ll.lng, ll.lat]);
+      coordinates.push(coordinates[0]);
 
-      const path = polygon.getPath();
-      window.google.maps.event.addListener(path, "set_at", () => {
-        onPolygonComplete(polygon);
-      });
-      window.google.maps.event.addListener(path, "insert_at", () => {
-        onPolygonComplete(polygon);
+      const geojson = {
+        type: "Polygon",
+        coordinates: [coordinates],
+      };
+      onPolygonComplete(geojson);
+    },
+    [onPolygonComplete]
+  );
+
+  const handleEdited = useCallback(
+    (e) => {
+      const layers = e.layers;
+      layers.eachLayer((layer) => {
+        const latlngs = layer.getLatLngs()[0];
+        const coordinates = latlngs.map((ll) => [ll.lng, ll.lat]);
+        coordinates.push(coordinates[0]);
+
+        const geojson = {
+          type: "Polygon",
+          coordinates: [coordinates],
+        };
+        onPolygonComplete(geojson);
       });
     },
     [onPolygonComplete]
   );
 
+  const handleDeleted = useCallback(() => {
+    onPolygonComplete(null);
+  }, [onPolygonComplete]);
+
   const handleSearch = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
       if (!searchQuery.trim() || !mapRef.current) return;
 
-      const geocoder = new window.google.maps.Geocoder();
-      geocoder.geocode({ address: searchQuery }, (results, status) => {
-        if (status === "OK" && results[0]) {
-          const location = results[0].geometry.location;
-          mapRef.current.panTo(location);
-          mapRef.current.setZoom(14);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`
+        );
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          mapRef.current.setView([parseFloat(lat), parseFloat(lon)], 14);
         }
-      });
+      } catch (err) {
+        console.error("Search failed:", err);
+      }
     },
     [searchQuery]
   );
-
-  if (loadError) {
-    return <div className="map-error">Error loading Google Maps. Check your API key.</div>;
-  }
-
-  if (!isLoaded) {
-    return <div className="map-loading">Loading map...</div>;
-  }
 
   return (
     <div className="map-component">
@@ -117,22 +94,49 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
         <button type="submit">Search</button>
       </form>
 
-      <GoogleMap
-        mapContainerStyle={mapContainerStyle}
+      <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
-        options={mapOptions}
-        onLoad={onMapLoad}
+        style={{ width: "100%", height: "100%" }}
+        ref={mapRef}
       >
-        <DrawingManager
-          options={drawingOptions}
-          onPolygonComplete={handlePolygonComplete}
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="Tiles &copy; Esri"
+        />
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+          attribution=""
         />
 
+        <FeatureGroup ref={featureGroupRef}>
+          <EditControl
+            position="topright"
+            onCreated={handleCreated}
+            onEdited={handleEdited}
+            onDeleted={handleDeleted}
+            draw={{
+              polygon: {
+                shapeOptions: {
+                  color: "#1a7a5c",
+                  fillColor: "#1a7a5c",
+                  fillOpacity: 0.2,
+                  weight: 2,
+                },
+              },
+              rectangle: false,
+              circle: false,
+              circlemarker: false,
+              marker: false,
+              polyline: false,
+            }}
+          />
+        </FeatureGroup>
+
         {rviMapUrl && rviLayerVisible && (
-          <RviOverlay url={rviMapUrl} map={mapRef.current} />
+          <TileLayer url={rviMapUrl} opacity={0.7} />
         )}
-      </GoogleMap>
+      </MapContainer>
 
       {rviMapUrl && (
         <div className="rvi-toggle">
@@ -153,30 +157,4 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
       )}
     </div>
   );
-}
-
-function RviOverlay({ url, map }) {
-  React.useEffect(() => {
-    if (!map || !url) return;
-
-    const tileLayer = new window.google.maps.ImageMapType({
-      getTileUrl: (coord, zoom) => {
-        return url.replace("{z}", zoom).replace("{x}", coord.x).replace("{y}", coord.y);
-      },
-      tileSize: new window.google.maps.Size(256, 256),
-      opacity: 0.7,
-      name: "RVI",
-    });
-
-    map.overlayMapTypes.push(tileLayer);
-
-    return () => {
-      const idx = map.overlayMapTypes.getArray().indexOf(tileLayer);
-      if (idx >= 0) {
-        map.overlayMapTypes.removeAt(idx);
-      }
-    };
-  }, [url, map]);
-
-  return null;
 }

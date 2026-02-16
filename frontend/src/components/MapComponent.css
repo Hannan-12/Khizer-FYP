@@ -3,6 +3,12 @@
   position: relative;
 }
 
+.map-component .leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 8px;
+}
+
 .map-search {
   position: absolute;
   top: 12px;
