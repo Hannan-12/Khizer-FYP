@@ -307,6 +307,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
       <MapContainer
         center={defaultCenter}
         zoom={defaultZoom}
+        maxZoom={22}
         style={{ width: "100%", height: "100%" }}
       >
         <MapController flyTo={flyTo} />
@@ -315,9 +316,16 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
           key={activeLayer}
           url={TILE_LAYERS[activeLayer].url}
           attribution={TILE_LAYERS[activeLayer].attribution}
+          maxNativeZoom={19}
+          maxZoom={22}
         />
         {TILE_LAYERS[activeLayer].overlay && (
-          <TileLayer url={TILE_LAYERS[activeLayer].overlay} attribution="" />
+          <TileLayer
+            url={TILE_LAYERS[activeLayer].overlay}
+            attribution=""
+            maxNativeZoom={19}
+            maxZoom={22}
+          />
         )}
 
         <FeatureGroup ref={featureGroupRef}>
