@@ -65,6 +65,21 @@ export default function Dashboard({ user, onLogout }) {
 
   const handlePolygonComplete = useCallback((geojson) => {
     setAoiGeojson(geojson);
+    if (geojson) {
+      const ring = geojson.coordinates[0];
+      const vertices = ring[ring.length - 1][0] === ring[0][0] && ring[ring.length - 1][1] === ring[0][1]
+        ? ring.slice(0, -1)
+        : ring;
+      console.group("Polygon AOI");
+      console.log("GeoJSON:", JSON.stringify(geojson, null, 2));
+      console.log("Vertices [lng, lat]:", vertices);
+      console.log(
+        "GEE snippet:\nee.Geometry.Polygon(\n  [[\n" +
+        vertices.map(([lng, lat]) => `    [${lng.toFixed(6)}, ${lat.toFixed(6)}]`).join(",\n") +
+        "\n  ]]\n)"
+      );
+      console.groupEnd();
+    }
   }, []);
 
   const handleAnalyze = async () => {
