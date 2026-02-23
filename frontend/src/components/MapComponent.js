@@ -43,6 +43,45 @@ const searchPin = new L.Icon({
   shadowSize: [41, 41],
 });
 
+// ── Geocoding helpers ─────────────────────────────────────────────────────
+// Nominatim (OpenStreetMap) — good coverage for cities and districts
+async function searchNominatim(q, limit = 5) {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=${limit}&accept-language=en&q=${encodeURIComponent(q)}`
+  );
+  return res.json();
+}
+
+// Photon (komoot) — broader coverage for small towns and villages
+function photonToItem(feature) {
+  const [lon, lat] = feature.geometry.coordinates;
+  const p = feature.properties;
+  const parts = [p.name, p.city, p.county, p.state, p.country].filter(Boolean);
+  return {
+    lat: String(lat),
+    lon: String(lon),
+    display_name: parts.join(", "),
+    type: p.type || "place",
+    place_id: `photon-${p.osm_id}`,
+  };
+}
+
+async function searchPhoton(q, limit = 5) {
+  const res = await fetch(
+    `https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=${limit}&lang=en`
+  );
+  const data = await res.json();
+  return (data.features || []).map(photonToItem);
+}
+
+// Try Nominatim first; if empty, fall back to Photon
+async function geocode(q, limit = 5) {
+  const primary = await searchNominatim(q, limit);
+  if (primary.length > 0) return primary;
+  return searchPhoton(q, limit);
+}
+// ─────────────────────────────────────────────────────────────────────────
+
 // Inner component that can call useMap() hook
 function MapController({ flyTo }) {
   const map = useMap();
@@ -94,10 +133,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
 
     debounceTimer.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(q)}`
-        );
-        const data = await res.json();
+        const data = await geocode(q, 5);
         setSuggestions(data);
         setShowSuggestions(data.length > 0);
       } catch {
@@ -141,14 +177,11 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
       setShowSuggestions(false);
 
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`
-        );
-        const data = await res.json();
-        if (data && data.length > 0) {
+        const data = await geocode(q, 1);
+        if (data.length > 0) {
           goToResult(data[0]);
         } else {
-          setSearchError("No results found for that location.");
+          setSearchError("No results found. Try a different spelling or a nearby larger area.");
           setSearchResult(null);
         }
       } catch {
