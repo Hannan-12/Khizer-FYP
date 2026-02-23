@@ -68,6 +68,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
   const featureGroupRef = useRef(null);
   const debounceTimer = useRef(null);
   const searchWrapperRef = useRef(null);
+  const cachedItem = useRef(null); // Nominatim item selected from autocomplete
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -110,9 +111,12 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
   const goToResult = useCallback((item) => {
     const center = [parseFloat(item.lat), parseFloat(item.lon)];
     const zoom = item.type === "country" ? 5 : item.type === "state" ? 7 : 14;
+    // Show only the short name (first segment) in the input for readability
+    const shortName = item.display_name.split(",")[0].trim();
+    cachedItem.current = item; // cache so Search button reuses it without a new API call
     setFlyTo({ center, zoom });
     setSearchResult({ center, label: item.display_name });
-    setSearchQuery(item.display_name);
+    setSearchQuery(shortName);
     setSuggestions([]);
     setShowSuggestions(false);
     setSearchError("");
@@ -123,6 +127,13 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
       e.preventDefault();
       const q = searchQuery.trim();
       if (!q) return;
+
+      // If the user pressed Search after picking a suggestion, reuse the cached result
+      // instead of sending the short display name back to Nominatim (which may not match)
+      if (cachedItem.current) {
+        goToResult(cachedItem.current);
+        return;
+      }
 
       setIsSearching(true);
       setSearchError("");
@@ -157,6 +168,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
     setSearchError("");
     setSearchResult(null);
     setFlyTo(null);
+    cachedItem.current = null;
   }, []);
 
   const handleCreated = useCallback(
@@ -214,6 +226,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setSearchError("");
+              cachedItem.current = null; // user is typing fresh — invalidate cache
             }}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             autoComplete="off"
