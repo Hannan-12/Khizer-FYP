@@ -9,6 +9,21 @@ import "./MapComponent.css";
 const defaultCenter = [30.3753, 69.3451];
 const defaultZoom = 6;
 
+const TILE_LAYERS = {
+  satellite: {
+    label: "Satellite",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri",
+    overlay: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+  },
+  streets: {
+    label: "Streets",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    overlay: null,
+  },
+};
+
 // Fix default marker icon broken by webpack
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -48,6 +63,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
   const [flyTo, setFlyTo] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [rviLayerVisible, setRviLayerVisible] = useState(true);
+  const [activeLayer, setActiveLayer] = useState("satellite");
 
   const featureGroupRef = useRef(null);
   const debounceTimer = useRef(null);
@@ -250,13 +266,13 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
         <MapController flyTo={flyTo} />
 
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles &copy; Esri"
+          key={activeLayer}
+          url={TILE_LAYERS[activeLayer].url}
+          attribution={TILE_LAYERS[activeLayer].attribution}
         />
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
-          attribution=""
-        />
+        {TILE_LAYERS[activeLayer].overlay && (
+          <TileLayer url={TILE_LAYERS[activeLayer].overlay} attribution="" />
+        )}
 
         <FeatureGroup ref={featureGroupRef}>
           <EditControl
@@ -295,6 +311,30 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
           </Marker>
         )}
       </MapContainer>
+
+      {/* ── Layer switcher ── */}
+      <div className="layer-switcher">
+        {Object.entries(TILE_LAYERS).map(([key, cfg]) => (
+          <button
+            key={key}
+            className={`layer-btn${activeLayer === key ? " active" : ""}`}
+            onClick={() => setActiveLayer(key)}
+          >
+            {key === "satellite" ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/>
+                <path d="M12 6a6 6 0 1 0 0 12A6 6 0 0 0 12 6zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 11l5-9 5 4 5-4 3 9"/>
+                <path d="M3 11v8h18v-8"/>
+              </svg>
+            )}
+            {cfg.label}
+          </button>
+        ))}
+      </div>
 
       {/* ── RVI toggle ── */}
       {rviMapUrl && (
