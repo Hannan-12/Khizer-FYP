@@ -10,16 +10,24 @@ const defaultCenter = [30.3753, 69.3451];
 const defaultZoom = 6;
 
 const TILE_LAYERS = {
+  map: {
+    label: "Map",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    overlay: null,
+  },
   satellite: {
     label: "Satellite",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri",
-    overlay: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    overlay:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
   },
-  streets: {
-    label: "Streets",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  terrain: {
+    label: "Terrain",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri",
     overlay: null,
   },
 };
@@ -102,7 +110,7 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
   const [flyTo, setFlyTo] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [rviLayerVisible, setRviLayerVisible] = useState(true);
-  const [activeLayer, setActiveLayer] = useState("satellite");
+  const [activeLayer, setActiveLayer] = useState("map");
 
   const featureGroupRef = useRef(null);
   const debounceTimer = useRef(null);
@@ -374,15 +382,25 @@ export default function MapComponent({ onPolygonComplete, rviMapUrl, aoiGeojson 
             className={`layer-btn${activeLayer === key ? " active" : ""}`}
             onClick={() => setActiveLayer(key)}
           >
-            {key === "satellite" ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/>
-                <path d="M12 6a6 6 0 1 0 0 12A6 6 0 0 0 12 6zm0 10a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/>
-              </svg>
-            ) : (
+            {key === "map" && (
+              /* Road-map icon */
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 11l5-9 5 4 5-4 3 9"/>
-                <path d="M3 11v8h18v-8"/>
+                <path d="M1 6l7-3 8 3 7-3v15l-7 3-8-3-7 3V6z"/>
+                <line x1="8" y1="3" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="21"/>
+              </svg>
+            )}
+            {key === "satellite" && (
+              /* Satellite icon */
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+              </svg>
+            )}
+            {key === "terrain" && (
+              /* Mountain/terrain icon */
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="3,20 9,8 13,14 17,10 21,20"/>
               </svg>
             )}
             {cfg.label}
