@@ -1,4 +1,5 @@
 import uuid
+import json
 import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 
@@ -23,7 +24,7 @@ async def create_analysis(
         "job_id": job_id,
         "user_id": user_id,
         "status": "pending",
-        "aoi_geojson": request.aoi_geojson,
+        "aoi_geojson": json.dumps(request.aoi_geojson),
         "start_date": request.start_date,
         "end_date": request.end_date,
         "crop_type": request.crop_type,
